@@ -22,14 +22,14 @@ def get_watermarked(pil_image: Image) -> Image:
         image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
         (h, w) = image.shape[:2]
         image = np.dstack([image, np.ones((h, w), dtype="uint8") * 255])
-        pct = 0.05
+        pct = 0.03
         full_watermark = cv2.imread(
             './resource_images/watermark.png', cv2.IMREAD_UNCHANGED
         )
         (fwH, fwW) = full_watermark.shape[:2]
         wH = int(pct * h)
-        wW = int((pct * h / fwH) * fwW)
-        watermark = cv2.resize(full_watermark, (wH, wW), interpolation=cv2.INTER_AREA)
+        wW = int((wH / fwH) * fwW)
+        watermark = cv2.resize(full_watermark, (wW, wH), interpolation=cv2.INTER_AREA)
         overlay = np.zeros((h, w, 4), dtype="uint8")
         (wH, wW) = watermark.shape[:2]
         overlay[h - wH - 10 : h - 10, 10 : 10 + wW] = watermark
@@ -65,21 +65,22 @@ class ModelImageVisualizer:
     def plot_transformed_image_from_url(
         self,
         url: str,
+        result_dir: str,
         path: str = 'test_images/image.png',
         results_dir:Path = None,
         figsize: Tuple[int, int] = (20, 20),
         render_factor: int = None,
-        
         display_render_factor: bool = False,
         compare: bool = False,
         post_process: bool = True,
         watermarked: bool = True,
     ) -> Path:
-        img = self._get_image_from_url(url)
-        img.save(path)
+        #img = self._get_image_from_url(url)
+        #img.save(path)
+        path = Path(url)
         return self.plot_transformed_image(
             path=path,
-            results_dir=results_dir,
+            results_dir=result_dir,
             figsize=figsize,
             render_factor=render_factor,
             display_render_factor=display_render_factor,
@@ -105,15 +106,15 @@ class ModelImageVisualizer:
         result = self.get_transformed_image(
             path, render_factor, post_process=post_process,watermarked=watermarked
         )
-        orig = self._open_pil_image(path)
-        if compare:
-            self._plot_comparison(
-                figsize, render_factor, display_render_factor, orig, result
-            )
-        else:
-            self._plot_solo(figsize, render_factor, display_render_factor, result)
+#         orig = self._open_pil_image(path)
+#         if compare:
+#             self._plot_comparison(
+#                 figsize, render_factor, display_render_factor, orig, result
+#             )
+#         else:
+#             self._plot_solo(figsize, render_factor, display_render_factor, result)
 
-        orig.close()
+#         orig.close()
         result_path = self._save_result_image(path, result, results_dir=results_dir)
         result.close()
         return result_path
@@ -161,7 +162,7 @@ class ModelImageVisualizer:
     def _save_result_image(self, source_path: Path, image: Image, results_dir = None) -> Path:
         if results_dir is None:
             results_dir = Path(self.results_dir)
-        result_path = results_dir / source_path.name
+        result_path = results_dir +"/"+ source_path.name
         image.save(result_path)
         return result_path
 
@@ -379,8 +380,9 @@ class VideoColorizer:
         watermarked: bool = True,
 
     ) -> Path:
-        source_path = self.source_folder / file_name
-        self._download_video_from_url(source_url, source_path)
+        # source_path = self.source_folder / file_name
+        # self._download_video_from_url(source_url, source_path)
+        source_path = Path(source_url)
         return self._colorize_from_path(
             source_path, render_factor=render_factor, post_process=post_process,watermarked=watermarked
         )
